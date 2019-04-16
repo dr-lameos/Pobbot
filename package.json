@@ -1,0 +1,15 @@
+{
+  "name": "Pobbot",
+  "version": "5.0.0",
+  "description": "FL POB repair status",
+  "main": "pobbotv5.js",
+  "author": "dr.lameos",
+  "dependencies": {
+    "cheerio": "^1.0.0-rc.2",
+    "discord.io": "https://github.com/woor/discord.io/tarball/gateway_v6",
+    "fs": "0.0.1-security",
+    "jquery": "^3.3.1",
+    "request": "^2.88.0",
+    "winston": "^3.2.1"
+  }
+}
