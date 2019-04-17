@@ -225,13 +225,6 @@ var alertMsg = '';
 	});
 }
 							
-							
-				
-				
-	
-	
-
-
 //How often to enable the monitoring - status page about every 16 minutes (unreliably) so 16 mins here to capture) 
 setInterval(function() {
     Baseload()
@@ -422,6 +415,8 @@ bot.on('message', function(user, userID, channelID, message, evt) {
 							
 							if (sB !=null){
                           reportMsg += '\n'+useChannel[setC].base[i] + ' ' + allBase[sB].health + '% ' + allBase[sB].status
+							} else {
+								reportMsg += '\n'+useChannel[setC].base[i] + ' - Does not exist'
 							}
 						});
 						setTimeout(sendReport, 1000);
