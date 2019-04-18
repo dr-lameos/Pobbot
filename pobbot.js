@@ -3,7 +3,6 @@ var authFile = './auth.json';
 var channelFile = './channels.json';
 var useChannel = require(channelFile);
 
-
 // Package dependencies
 const Discord = require('discord.js');
 var logger = require('winston');
@@ -27,6 +26,20 @@ var setC = null;
 var alertlevels = ["attack", "low", "degrade", "all", "off"]
 var newHealth = '';
 
+//The writefile function
+function writeChannelFile() {
+	var data = JSON.stringify(useChannel);
+	var fs = require("fs");
+	var fileContent = data;
+	fs.writeFileSync(channelFile, fileContent, (err) => {
+		if (err) {
+			console.error(err);
+			return;
+		}
+		//    logger.info("File has been created");
+	});
+	logger.info('Written File');
+}
 
 // Initialize Discord Bot
 const client = new Discord.Client();
@@ -34,7 +47,7 @@ client.login(auth.token);
 
 // Bot login to Discord
 client.on('ready', () => {
-	logger.info('Connected as '+client.user.username);
+	logger.info('Connected as ' + client.user.username);
 });
 
 //Wait while bot connects to Discord
@@ -52,21 +65,10 @@ function botStartup() {
 
 		//Wipe any stored health data since last startup
 		useChannel[i].status = [];
-		var data = JSON.stringify(useChannel);
-		var fs = require("fs");
-		var fileContent = data;
-		setTimeout(wipeData, 1000);
 
-		function wipeData() {
-			fs.writeFileSync(channelFile, fileContent, (err) => {
-				if (err) {
-					console.error(err);
-					return;
-				};
-				//    logger.info("File has been created");
-			});
-		}
 	});
+	writeChannelFile();
+
 	//Do initial scan
 	setTimeout(Baseload, 10000);
 }
@@ -76,7 +78,8 @@ function Baseload() {
 	request('https://discoverygc.com/forums/bases.php', function (err, resp, body) {
 		if (err) {
 			logger.warn(err);
-		return;}
+			return;
+		}
 		var document = resp;
 
 		//Bases area of page
@@ -163,8 +166,9 @@ function baseAlert() {
 							useChannel[setC].status[i] = 'D';
 						}
 					}
+					sB = null;
 				}
-				sB = null;
+
 			});
 		}
 
@@ -184,12 +188,15 @@ function baseAlert() {
 						var alertMsg3 = alertMsg.substring(4000, 6000);
 						client.channels.get(useChannel[chan].channel).send(alertMsg3);
 					}
+
 				} else {
+
 					client.channels.get(useChannel[chan].channel).send(alertMsg);
 				}
 				alertMsg = '';
 			}
 		}
+
 	});
 }
 
@@ -206,17 +213,7 @@ function addChannel() {
 		"base": [],
 		"status": []
 	});
-	var data = JSON.stringify(useChannel);
-	var fs = require("fs");
-	var fileContent = data;
-
-	fs.writeFileSync(channelFile, fileContent, (err) => {
-		if (err) {
-			console.error(err);
-			return;
-		};
-		//    logger.info("File has been created");
-	});
+	writeChannelFile();
 }
 
 function remChannel() {
@@ -225,32 +222,13 @@ function remChannel() {
 			useChannel.splice(i, 1);
 		}
 	}
-	var data = JSON.stringify(useChannel);
-	var fs = require("fs");
-	var fileContent = data;
-
-	fs.writeFileSync(channelFile, fileContent, (err) => {
-		if (err) {
-			console.error(err);
-			return;
-		};
-		//    logger.info("File has been created");
-	});
+	writeChannelFile();
 }
 
 function addBase() {
 	var oldBase = useChannel[setC].base;
 	useChannel[setC].base = oldBase.concat(args);
-	var data = JSON.stringify(useChannel);
-	var fs = require("fs");
-	var fileContent = data;
-
-	fs.writeFileSync(channelFile, fileContent, (err) => {
-		if (err) {
-			console.error(err);
-			return;
-		};
-	});
+	writeChannelFile();
 }
 
 function remBase() {
@@ -260,27 +238,20 @@ function remBase() {
 		}
 	}
 	useChannel[setC].status = [];
-	var data = JSON.stringify(useChannel);
-	var fs = require("fs");
-	var fileContent = data;
-
-	fs.writeFileSync(channelFile, fileContent, (err) => {
-		if (err) {
-			console.error(err);
-			return;
-		};
-	});
+	writeChannelFile();
 }
+
 
 client.on('message', message => {
 	//   It will listen for messages that will start with `!`
-	var channelID=message.channel.id
+	var channelID = message.channel.id
 	if (message.content.substring(0, 1) == '!') {
 		args = message.content.substring(1).split(' ');
 		var cmd = args[0];
 		args = args.splice(1);
 		arg = args.join(' '); // = "Base 1,Base2, Base3"
 		args = arg.substring().split(","); // = ["Base 1","Base2"," Base3"]
+
 
 		switch (cmd) {
 			//Start alerting/scanning on this channel
@@ -335,7 +306,7 @@ client.on('message', message => {
 					message.channel.send("To use this channel for pobbot, say !addpobbot");
 				}
 				break;
-			// use !base to get a report
+				// use !base to get a report
 			case 'base':
 				for (var i = 0; i < useChannel.length; i++) {
 					if (useChannel != '' && useChannel[i].channel.indexOf(channelID) != -1) {
@@ -349,6 +320,7 @@ client.on('message', message => {
 						baseReport();
 
 						function baseReport() {
+
 							var reportMsg = 'Hi ' + message.author + ". Here's how the bases are doing:";
 							useChannel[setC].base.forEach(function (element, i) {
 								pobName = useChannel[setC].base[i];
@@ -362,7 +334,7 @@ client.on('message', message => {
 								if (sB != null) {
 									reportMsg += '\n' + useChannel[setC].base[i] + ' ' + allBase[sB].health + '% ' + allBase[sB].status
 								} else {
-									reportMsg += '\n' + useChannel[setC].base[i] + " Base doesn't exist"
+									reportMsg += '\n' + useChannel[setC].base[i] + " - Base doesn't exist"
 								}
 							});
 							setTimeout(sendReport, 1000);
@@ -442,7 +414,7 @@ client.on('message', message => {
 				message.channel.send("pobbot monitors your base health and will send alerts on status changes\nIt currently supports the following commands:\n!addpobbot - *Deploy pobbot on this channel*\n!rempobbot - *Remove pobbot from this channel*\n!addbase - *Start monitoring a base*\n!rembase - *Stop monitoring a base*\n!base - *A report of the current base status*\n!level - *Set your level of alerting*\n!help - *What you're currently looking at*");
 				break;
 		}
-		switch (true){
+		switch (true) {
 			case /hello|Guten/.test(message):
 				message.channel.send('Greetings ' + message.author);
 				break;
