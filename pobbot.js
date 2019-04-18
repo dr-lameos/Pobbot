@@ -165,6 +165,7 @@ function baseAlert() {
 			});
 		}
 		sendAlert(i,alertMsg);
+		alertMsg='';
 	});
 }
 
