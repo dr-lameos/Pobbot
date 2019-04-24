@@ -22,7 +22,7 @@ var allBase = [];
 var alertlevels = ["attack", "low", "degrade", "all", "off"]
 
 //The writefile function
-function writeChannelFile () {
+function writeChannelFile() {
 	var data = JSON.stringify(useChannel);
 	var fs = require("fs");
 	var fileContent = data;
@@ -31,7 +31,7 @@ function writeChannelFile () {
 			console.error(err);
 			return;
 		}
-				//    logger.info("File has been created");
+		//    logger.info("File has been created");
 	});
 	logger.info('Written File');
 }
@@ -42,7 +42,7 @@ client.login(auth.token);
 
 // Bot login to Discord
 client.on('ready', () => {
-	logger.info('Connected as '+client.user.username);
+	logger.info('Connected as ' + client.user.username);
 });
 
 //Wait while bot connects to Discord
@@ -63,7 +63,7 @@ function botStartup() {
 
 	});
 	writeChannelFile();
-		
+
 	//Do initial scan
 	setTimeout(Baseload, 10000);
 }
@@ -73,7 +73,8 @@ function Baseload() {
 	request('https://discoverygc.com/forums/bases.php', function (err, resp, body) {
 		if (err) {
 			logger.warn(err);
-		return;}
+			return;
+		}
 		var document = resp;
 
 		//Bases area of page
@@ -89,7 +90,7 @@ function Baseload() {
 			}
 			var newHealth = parseFloat($(this).find('td').eq(2).text());
 			var ii = allBase.findIndex((item) => item.base === baseName);
-			healthCompare(newHealth,ii);
+			healthCompare(newHealth, ii);
 			allBase[ii].health = newHealth;
 		});
 	});
@@ -98,7 +99,7 @@ function Baseload() {
 }
 
 //Does the health comparison
-function healthCompare(newHealth,ii) {
+function healthCompare(newHealth, ii) {
 	//Sends a message if health declines by more than 20000
 
 	if ((allBase[ii].health - newHealth) > 0.005) {
@@ -161,15 +162,15 @@ function baseAlert() {
 						}
 					}
 					sB = null;
-				}				
+				}
 			});
 		}
-		sendAlert(i,alertMsg);
-		alertMsg='';
+		sendAlert(i, alertMsg);
+		alertMsg = '';
 	});
 }
 
-function sendAlert(chan,alertMsg) {
+function sendAlert(chan, alertMsg) {
 	if (alertMsg.length > 0) {
 
 		if (alertMsg.length >= 2000) {
@@ -189,9 +190,9 @@ function sendAlert(chan,alertMsg) {
 	}
 }
 
-function baseReport(setC,message) {
+function baseReport(setC, channelID) {
 
-	var reportMsg = 'Hi ' + message.author + ". Here's how the bases are doing:";
+	var reportMsg = 'Base Report:';
 	useChannel[setC].base.forEach(function (element, i) {
 		pobName = useChannel[setC].base[i];
 		var sB = null;
@@ -207,33 +208,33 @@ function baseReport(setC,message) {
 			reportMsg += '\n' + useChannel[setC].base[i] + " - Base doesn't exist"
 		}
 	});
-	setTimeout(sendReport, 1000,reportMsg,message);
+	setTimeout(sendReport, 1000, reportMsg, channelID);
 }
 
-function sendReport(reportMsg,message) {
+function sendReport(reportMsg, channelID) {
 	if (reportMsg.length >= 2000) {
 		var longMsg1 = reportMsg.substring(0, 2000);
 		var longMsg2 = reportMsg.substring(2000, 4000);
 		var longMsg3 = reportMsg.substring(4000, 6000);
-		setTimeout(longReport, 1000,longMsg1,longMsg2,longMsg3,message);
+		setTimeout(longReport, 1000, reportMsg, longMsg1, longMsg2, longMsg3, channelID);
 
 	} else {
-		message.channel.send(reportMsg);
+		client.channels.get(channelID).send(reportMsg);
 	}
 }
 
-function longReport(longMsg1,longMsg2,longMsg3,message) {
-	message.channel.send(longMsg1);
+function longReport(reportMsg, longMsg1, longMsg2, longMsg3, channelID) {
+	client.channels.get(channelID).send(longMsg1);
 	setTimeout(longReport2, 500);
 
 	function longReport2() {
-		message.channel.send(longMsg2);
+		client.channels.get(channelID).send(longMsg2);
 	}
 	if (reportMsg.length >= 4000) {
 		setTimeout(longReport3, 1000);
 
 		function longReport3() {
-			message.channel.send(longMsg3);
+			client.channels.get(channelID).send(longMsg3);
 		}
 	}
 }
@@ -262,13 +263,14 @@ function remChannel(selChan) {
 	writeChannelFile();
 }
 
-function addBase(setC,args) {
+function addBase(setC, args) {
+
 	var oldBase = useChannel[setC].base;
 	useChannel[setC].base = oldBase.concat(args);
 	writeChannelFile();
 }
 
-function remBase(setC,args) {
+function remBase(setC, args) {
 	for (var i = 0; i < useChannel[setC].base.length; i++) {
 		if (useChannel[setC].base[i] === args.join()) {
 			useChannel[setC].base.splice(i, 1);
@@ -278,9 +280,10 @@ function remBase(setC,args) {
 	writeChannelFile();
 }
 
+
 client.on('message', message => {
 	//   It will listen for messages that will start with `!`
-	var channelID=message.channel.id
+	var channelID = message.channel.id
 	if (message.content.substring(0, 1) == '!') {
 		var args = message.content.substring(1).split(' ');
 		var cmd = args[0];
@@ -333,7 +336,7 @@ client.on('message', message => {
 					message.channel.send("To use this channel for pobbot, say !addpobbot");
 				}
 				break;
-			// use !base to get a report
+				// use !base to get a report
 			case 'base':
 				for (var i = 0; i < useChannel.length; i++) {
 					if (useChannel != '' && useChannel[i].channel.indexOf(channelID) != -1) {
@@ -344,7 +347,7 @@ client.on('message', message => {
 				}
 				if (existsChannel === 'True') {
 					if (useChannel[setC].base.length > 0) {
-						baseReport(setC,message);
+						baseReport(setC, channelID);
 
 					} else {
 						message.channel.send("You haven't added any bases - use !addbase <name>");
@@ -367,7 +370,7 @@ client.on('message', message => {
 					message.channel.send("You need to name a base");
 				} else if (existsChannel === 'True') {
 					message.channel.send("I've added " + args + ' to my monitors');
-					addBase(setC,args);
+					addBase(setC, args);
 				} else {
 					message.channel.send("To use this channel for pobbot, say !addpobbot");
 				}
@@ -383,7 +386,7 @@ client.on('message', message => {
 				}
 				if (existsChannel === 'True') {
 					message.channel.send("I've removed " + args + ' from my monitors.');
-					remBase(setC,args);
+					remBase(setC, args);
 
 				} else {
 					message.channel.send("To use this channel for pobbot, say !addpobbot");
@@ -394,13 +397,8 @@ client.on('message', message => {
 				message.channel.send("pobbot monitors your base health and will send alerts on status changes\nIt currently supports the following commands:\n!addpobbot - *Deploy pobbot on this channel*\n!rempobbot - *Remove pobbot from this channel*\n!addbase - *Start monitoring a base*\n!rembase - *Stop monitoring a base*\n!base - *A report of the current base status*\n!level - *Set your level of alerting*\n!help - *What you're currently looking at*");
 				break;
 		}
-		switch (true){
-			case /hello|Guten/.test(message):
-				message.channel.send('Greetings ' + message.author);
-				break;
-			case /who|name/.test(message):
-				message.channel.send('I am Pobbot Cubpizza');
-				break;
-		}
 	}
+});
+client.on('error', (err) => {
+	logger.error(err.message);
 });
